@@ -113,12 +113,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="DebugMode_CompiledViewer.cpp" />
     <ClCompile Include="DMSLCompiler.cpp" />
     <ClCompile Include="DMSLPrecompiler.cpp" />
     <ClCompile Include="DMSLUtils.cpp" />
-    <ClCompile Include="test.cpp" />
+    <ClCompile Include="DMSLVM.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DMSL.h" />
     <ClInclude Include="DMSLCompiler.h" />
     <ClInclude Include="DMSLPrecompiler.h" />
     <ClInclude Include="DMSLUtils.h" />

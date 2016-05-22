@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="test.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="DMSLUtils.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -25,6 +22,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="DMSLCompiler.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DMSLVM.cpp">
+      <Filter>头文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DebugMode_CompiledViewer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -39,6 +42,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="DMSLCompiler.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DMSL.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

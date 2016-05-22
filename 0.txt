@@ -5,38 +5,19 @@ attribute a1
 attribute a2
 attribute a3,a4,a5
 cfunc add,2
-cfunc sub,2
-cfunc exx,2
-cmethod epx,5
-cmethod ssss,6
-const vvv = 1.333
-const pi = 3.1415926
 
-unit 0	#0
-	var v1,v2,v3
-	var v4
-	init	#初始化
-		v1 <- 1:2:3:4
-		v2 <- 2:3:3:3
-	end
-	main	#主程序
-		a1 = a2 + v1
-		a3 = a1 + v2
-	end
-end
+
+
 unit 1
-	var v1,v2,v3
-	var x
-	main
-		add(1,2,3)
-		if x > 5
-			x = x + 1
-			while x < 5
-				x = x - 1
-				for x = 0 to 15 step 0.01
-					x = x +1
-				end
-			end
-		end
-	end
+    init
+        a1 = 500
+        a2 = 600
+    end
+    main
+        #a1 = add(100,0)-add(200,10*(-1))
+        if (-a1 == -500 && (-a2 == -(600)))
+            a1 = -(-add(-(-(-a2)),1))
+            a1 = 500
+        end
+    end
 end

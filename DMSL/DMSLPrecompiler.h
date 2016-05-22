@@ -8,7 +8,7 @@
 
 namespace Dmsl {
 	namespace Compiler {
-		
+
 		//预编译成果
 		struct Precompiled {
 			struct Unit {
@@ -23,8 +23,8 @@ namespace Dmsl {
 			std::vector<Unit> units;	//程序单元
 		};
 
-		//预编译代码
-		void Precompile(const std::string& codeStr,Precompiled&,std::ostream& log);
+		//预编译代码，返回true为成功
+		bool Precompile(const std::string& codeStr,Precompiled&,std::ostream& log);
 
 		//显示预编译后的代码
 		void DisplayPrecompiled(const Precompiled&, std::ostream&);

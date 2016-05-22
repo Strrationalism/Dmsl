@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="Dmsl" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/Dmsl" prefix_auto="1" extension_auto="1" />
+				<Option object_output="bin/Debug/obj/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/Dmsl" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="bin/Release" />
+				<Option object_output="bin/Release/obj/" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Option createDefFile="1" />
+				<Option createStaticLib="1" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-fexceptions" />
+		</Compiler>
+		<Unit filename="0.txt" />
+		<Unit filename="DMSL/DMSL.h" />
+		<Unit filename="DMSL/DMSLCompiler.cpp" />
+		<Unit filename="DMSL/DMSLCompiler.h" />
+		<Unit filename="DMSL/DMSLElf.h" />
+		<Unit filename="DMSL/DMSLPrecompiler.cpp" />
+		<Unit filename="DMSL/DMSLPrecompiler.h" />
+		<Unit filename="DMSL/DMSLUtils.cpp" />
+		<Unit filename="DMSL/DMSLUtils.h" />
+		<Unit filename="DMSL/DMSLVM.cpp" />
+		<Unit filename="DMSL/DebugMode_CompiledViewer.cpp">
+			<Option compilerVar="CC" />
+			<Option compile="0" />
+			<Option link="0" />
+		</Unit>
+		<Unit filename="DMSL/test.cpp">
+			<Option compile="0" />
+			<Option link="0" />
+		</Unit>
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

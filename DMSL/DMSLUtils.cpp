@@ -1,5 +1,7 @@
 #include "DMSLUtils.h"
+#include <iostream>
 #include <stdexcept>
+#include <set>
 #include <cctype>
 #include <string>
 
@@ -65,7 +67,7 @@ namespace Dmsl {
 		//转换到float
 		float ToFloat(const std::string& f) {
 			for (char ch : f)
-				if (!isdigit(ch) || ch != '.') throw std::invalid_argument(string("错误的数值 ") + f);
+				if (!isdigit(ch) && ch != '.') throw std::invalid_argument(string("错误的数值 ") + f);
 			return (float)atof(f.c_str());
 		}
 		int ToInt(const std::string & i)
@@ -93,15 +95,38 @@ namespace Dmsl {
 			if (s.empty()) throw invalid_argument("空的变量/常量/函数/方法名。");
 			if (isdigit(s[0])) throw invalid_argument("变量/常量/函数/方法名第一位不能是数字：" + s + "。");
 			for (char c : s) if (!isalnum(c) && c != '_') throw invalid_argument("非法的变量/常量/函数/方法名：" + s + "。");
-			
+
 		}
 		std::string ReadToken(std::string & s)
 		{
-			if (s.empty()) return s;
+		    static set<string> symbols;
+		    static bool inited = false;
+		    if(!inited){
+                inited = true;
+                symbols.insert("+");
+                symbols.insert("-");
+                symbols.insert("*");
+                symbols.insert("/");
+                symbols.insert("(");
+                symbols.insert(")");
+                symbols.insert("%");
+                symbols.insert("&&");
+                symbols.insert("||");
+                symbols.insert("!");
+                symbols.insert(">=");
+                symbols.insert("<=");
+                symbols.insert("==");
+                symbols.insert("!=");
+                symbols.insert(">");
+                symbols.insert("<");
+                symbols.insert(",");
+                symbols.insert("@");
+		    }
+			if(s.empty()) return s;
 
 			string r;
 			if (isalnum(s[0])) {
-				while (isalnum(s[0])) {
+				while (isalnum(s[0]) || s[0] == '.') {
 					r += s[0];
 					s = s.substr(1, s.length() - 1);
 				}
@@ -110,7 +135,13 @@ namespace Dmsl {
 				while (!isalnum(s[0])) {
 					r += s[0];
 					s = s.substr(1, s.length() - 1);
+					if(s.empty()) break;
 				}
+                while(!symbols.count(r)){
+                    s = r[r.length()-1] + s;
+                    r = r.substr(0,r.length()-1);
+                    if(r.empty()) throw invalid_argument("错误的运算符。");
+                }
 			}
 			return r;
 		}

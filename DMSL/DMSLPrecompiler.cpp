@@ -1,7 +1,6 @@
 #include "DMSLPrecompiler.h"
 #include "DMSLUtils.h"
 #include <sstream>
-#include <iostream>
 #include <stdexcept>
 using namespace std;
 using namespace Dmsl::Utils;
@@ -9,8 +8,8 @@ using namespace Dmsl::Utils;
 namespace Dmsl {
 	namespace Compiler {
 		//预编译代码
-		void Precompile(const std::string& codeStr, Precompiled& comp,ostream& log) {
-			int inProgram = 0;
+		bool Precompile(const std::string& codeStr, Precompiled& comp,ostream& log) {
+		    bool success = true;
 			int nowLine = 0;
 			stringstream code(codeStr);
 
@@ -25,7 +24,7 @@ namespace Dmsl {
 
 			uint32_t nextVar = 0;	//下一个局部变量编号
 			std::vector<Precompiled::Unit>::iterator nowUnit;	//当前的Unit
-			enum { INIT, MAIN }nowProgram;	//当前程序块
+			enum { INIT, MAIN,ERROR }nowProgram = ERROR;	//当前程序块
 
 			while (!code.eof()) {
 				try {
@@ -139,10 +138,12 @@ namespace Dmsl {
 				}
 				catch (exception& e) {
 					log << "编译错误：在行" + to_string(nowLine) + "有" + e.what() << endl;
+					success = false;
 				}
-				
+
 			}
-			if (layer != 0) log << "编译错误：存在没配对的代码块首尾！" << endl;
+			if (layer != 0){log << "编译错误：存在没配对的代码块首尾！" << endl;success = false;}
+			return success;
 		}
 		void DisplayPrecompiled(const Precompiled & comp, std::ostream & out)
 		{

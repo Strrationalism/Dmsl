@@ -1,0 +1,47 @@
+uniform dmslVersion	#Dmsl编译器/虚拟机版本
+attribute result	#作为输出的值
+
+cfunc sin,1	#数学函数
+cfunc cos,1
+cfunc tan,1
+cfunc sqrt,1
+cfunc abs,1
+cfunc pow,2
+cfunc rand,0
+
+cmethod print,1	#输出一个值
+cmethod endl,0	#换行
+cmethod setDMOVFS,1	#设置多重赋值时选择第几个数字(从0开始计数)
+cmethod gensokyo,1	#输入密码以进入幻想乡
+
+const PI = 3.1415926
+
+unit 0
+	init
+		setDMOVFS,1	
+		result <- 233:123:456:789
+	end
+	main
+		print dmslVersion
+		endl
+		gensokyo 123456
+		endl
+	end
+end
+
+unit 1
+	init
+		setDMOVFS,1	
+		result <- 233:123:456:789
+	end
+	main
+		result = result +1
+	end
+end
+
+unit 2
+	main
+		result = rand()
+	end
+end
+

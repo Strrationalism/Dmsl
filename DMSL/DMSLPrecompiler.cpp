@@ -1,15 +1,18 @@
 #include "DMSLPrecompiler.h"
 #include "DMSLUtils.h"
 #include <sstream>
+#include <iostream>
 #include <stdexcept>
 using namespace std;
 using namespace Dmsl::Utils;
 
+
 namespace Dmsl {
 	namespace Compiler {
 		//预编译代码
-		bool Precompile(const std::string& codeStr, Precompiled& comp,ostream& log) {
-		    bool success = true;
+		bool Precompile(const std::string& codeStr, Precompiled& comp, ostream& log) {
+			std::map<std::string, uint32_t> inVarying, outVarying;	//全局的in和out的Varying表
+			bool success = true;
 			int nowLine = 0;
 			stringstream code(codeStr);
 
@@ -24,7 +27,17 @@ namespace Dmsl {
 
 			uint32_t nextVar = 0;	//下一个局部变量编号
 			std::vector<Precompiled::Unit>::iterator nowUnit;	//当前的Unit
-			enum { INIT, MAIN,ERROR }nowProgram = ERROR;	//当前程序块
+			enum { INIT, MAIN, ERROR, CUSTUM, EVENT, CANDY_ONCE }nowProgram = ERROR;	//当前程序块
+
+			vector<Precompiled::Unit::Code> candyCode;
+			string candyRight;
+
+			std::string custumModule;	//自定义模块的名字
+			int custumModuleHandle;	//自定义模块编号
+
+			std::map<int, std::string> handle2module;	//编号对名字的链接
+
+
 
 			while (!code.eof()) {
 				try {
@@ -32,8 +45,38 @@ namespace Dmsl {
 					getline(code, line);
 					++nowLine;
 
+
 					line = TrimRight(DeleteComments(line));
+
+					if (TrimAll(line)[0] == '[') {
+						auto pos = line.find('[');
+						line = line.substr(pos + 1, line.length() - 1);
+						while (1) {
+							string app;
+							getline(code, app);
+
+							line += ' ' + TrimRight(DeleteComments(app));
+
+							if (TrimAll(app).back() == ']') {
+								auto pos = line.find(']');
+								line = line.substr(0,pos);
+								//Log("%s\n", line.c_str());
+								break;
+							}
+						}
+					}
+					
 					if (line.empty()) continue;
+					else if (line[0] == '$') {
+						//预编译指令
+						line = line.substr(1, line.size() - 1);
+						auto cmd = ReadLeftWord(line);
+						if (cmd == "resetline") {
+							nowLine = 0;
+						}
+
+						continue;
+					}
 
 
 					if (layer == 0) {	//全局层
@@ -48,15 +91,33 @@ namespace Dmsl {
 							--nowUnit;
 							nowUnit->num = unitNum;
 							nextVar = nextAttribute;
+							nowUnit->outVarying = outVarying;
+							nowUnit->inVarying = inVarying;
+						}
+						else if (left == "interface") {
+							custumModule = TrimAll(right);
+							if (comp.custumProgramTable.count(custumModule)) {
+								custumModuleHandle = comp.custumProgramTable[custumModule];
+							}
+							else {
+								custumModuleHandle = 0;
+								while (handle2module.count(custumModuleHandle)) {
+									custumModuleHandle++;
+								}
+								comp.custumProgramTable[custumModule] = custumModuleHandle;
+								handle2module[custumModuleHandle] = custumModule;
+							}
+							comp.interfaceTable.insert(custumModuleHandle);
 						}
 						else if (left == "uniform") {
-							vector<string> unis;
+							/*vector<string> unis;
 							Split(right, unis, ',');
 							for (auto& s : unis) {
 								s = TrimAll(s);
 								CheckName(s);
 								comp.uniformVars[s] = nextUniform++;
-							}
+							}*/
+							throw runtime_error("uniform型变量已经被移除。");
 						}
 						else if (left == "attribute") {
 							if (disableAttribute) throw runtime_error("此处不应再出现attribute，你应该把它放在最前边。");
@@ -68,7 +129,7 @@ namespace Dmsl {
 								comp.attributeVars[s] = nextAttribute++;
 							}
 						}
-						else if(left == "cfunc"){
+						else if (left == "cfunc") {
 							auto pos = right.find(',');
 							if (pos == string::npos) throw runtime_error("错误的C语言函数链接：没提供参数个数？");
 							auto name = right.substr(0, pos);
@@ -91,8 +152,20 @@ namespace Dmsl {
 							auto name = right.substr(0, pos);
 							name = TrimAll(name);
 							CheckName(name);
-							comp.constants[name] = ToFloat(TrimAll(right.substr(pos + 1, right.length() - pos - 1)));
+							comp.constants[name] = ToDouble(TrimAll(right.substr(pos + 1, right.length() - pos - 1)));
 						}
+						/*else if (left == "in") {
+							auto pos = right.find(':');
+							auto name = TrimAll(right.substr(0, pos));
+							if (inVarying.count(name)) throw std::runtime_error("重定义InVarying:" + name);
+							inVarying[name] = ToInt(right.substr(pos + 1, right.length() - pos - 1));
+						}
+						else if (left == "out") {
+							auto pos = right.find(':');
+							auto name = TrimAll(right.substr(0, pos));
+							if (outVarying.count(name)) throw std::runtime_error("重定义OutVarying:" + name);
+							outVarying[name] = ToInt(right.substr(pos + 1, right.length() - pos - 1));
+						}*/
 						else throw runtime_error("未知意图。");
 
 					}
@@ -101,7 +174,7 @@ namespace Dmsl {
 						string right = ReadRightLine(line);
 						if (left == "end") {
 							--layer;
-							nowUnit -> memSize = nowUnit->varTable.size() + comp.attributeVars.size();
+							nowUnit->memSize = nowUnit->varTable.size() + comp.attributeVars.size();
 						}
 						else if (left == "init") {
 							++layer;
@@ -117,23 +190,120 @@ namespace Dmsl {
 							for (auto& s : vars) {
 								s = TrimAll(s);
 								CheckName(s);
+								if (nowUnit->varTable.count(s)) throw std::runtime_error("重定义var："+s);
 								nowUnit->varTable[s] = nextVar++;
 							}
 						}
-						else throw runtime_error("未知意图。");
+						else if (left == "in") {
+							std::vector<string> v;
+							Split(right, v, ',');
+
+							for (auto& p : v) {
+								auto pos = p.find(':');
+								auto name = TrimAll(p.substr(0, pos));
+								if (nowUnit->inVarying.count(name)) throw std::runtime_error("重定义InVarying:" + name);
+								CheckName(name);
+
+								if (pos == string::npos) {
+									nowUnit->inVarying[name] = nowUnit->inVarying.size();
+								}
+								else {
+									nowUnit->inVarying[name] = ToInt(p.substr(pos + 1, p.length() - pos - 1));
+								}
+							}
+						}
+						else if (left == "incopy") {
+							std::vector<string> v;
+							Split(right, v, ',');
+
+							for (auto& p : v) {
+								auto pos = p.find(':');
+								auto name = TrimAll(p.substr(0, pos));
+								if (nowUnit->inVarying.count(name)) throw std::runtime_error("重定义InVarying:" + name);
+								int inPoint = pos == string::npos ? nowUnit->inVarying .size():ToInt(p.substr(pos + 1, p.length() - pos - 1));
+								nowUnit->inVarying["DDDDDDDDDmslInCopyCandy"+to_string(inPoint)] = inPoint;
+								CheckName(name);
+								if (nowUnit->varTable.count(name) == 1) throw std::runtime_error("在incopy基础上多余定义了var：" + name);
+								if(comp.attributeVars.count(name) == 0) nowUnit->varTable[name] = nextVar++;
+								nowUnit->initProgram.push_back({ name + " = DDDDDDDDDmslInCopyCandy" + to_string(inPoint) });
+							}
+						}
+						else if (left == "out") {
+							std::vector<string> v;
+							Split(right, v, ',');
+
+							for (auto& p : v) {
+								auto pos = p.find(':');
+								auto name = TrimAll(p.substr(0, pos));
+								if (nowUnit->outVarying.count(name)) throw std::runtime_error("重定义OutVarying:" + name);
+								nowUnit->outVarying[name] = pos == string::npos ? nowUnit->outVarying .size():ToInt(p.substr(pos + 1, p.length() - pos - 1));
+							}
+						}
+						else if (left == "event") {
+							++layer;
+							int time = ToInt(TrimAll(right));
+							nowProgram = EVENT;
+							nowUnit->eventProgram.push_back({ time,std::vector<Precompiled::Unit::Code>() });
+						}
+						else if (left == "method") {
+							++layer;
+							nowProgram = CUSTUM;
+							custumModule = TrimAll(right);
+							if (comp.custumProgramTable.count(custumModule)) {
+								custumModuleHandle = comp.custumProgramTable[custumModule];
+							}
+							else {
+								custumModuleHandle = 0;
+								while (handle2module.count(custumModuleHandle)) {
+									custumModuleHandle++;
+								}
+								comp.custumProgramTable[custumModule] = custumModuleHandle;
+								handle2module[custumModuleHandle] = custumModule;
+							}
+						}
+						else if (left == "once") {
+							++layer;
+							nowProgram = CANDY_ONCE;
+							candyRight = right;
+							candyCode.clear();
+						}
+						else throw runtime_error("未知块 " + left);
 					}
 					else if (layer >= 2) {	//在程序块内
 						string left = ReadLeftWord(line);
-						if (left == "end") --layer;
+						if (left == "end") {
+							--layer;
+							if (layer == 1) {
+								if (nowProgram == CANDY_ONCE) {
+									//Var
+									string candyVarName = "DDDDDDdmslOnceBlockCandyVar" + to_string(nextVar);
+									nowUnit->varTable[candyVarName] = nextVar++;
+
+									//Init
+									nowUnit->initProgram.insert(nowUnit->initProgram.begin(), { candyVarName + "=0",-1 });
+
+									//Main
+									auto nextLine = nowUnit->mainProgram.insert(nowUnit->mainProgram.begin(), { "if (" + candyRight + ")&&" + candyVarName + "==0" ,-1 });
+									for (auto& p : candyCode)
+										nextLine = nowUnit->mainProgram.insert(++nextLine, p);
+									nextLine = nowUnit->mainProgram.insert(++nextLine, { candyVarName + "=1",-1 });
+									nowUnit->mainProgram.insert(++nextLine, { "end",-1 });
+
+								}
+							}
+						}
 						else if (
 							left == "if" ||
 							left == "while" ||
 							left == "for" ||
-							left == "do"
+							left == "times"
 							)
 							++layer;
-						if (nowProgram == INIT) nowUnit->initProgram.push_back(line);
-						else if (nowProgram == MAIN) nowUnit->mainProgram.push_back(line);
+						if (nowProgram == INIT) nowUnit->initProgram.push_back({ line,nowLine });
+						else if (nowProgram == MAIN) nowUnit->mainProgram.push_back({ line,nowLine });
+						else if (nowProgram == CUSTUM) nowUnit->custumProgram[custumModuleHandle].push_back({ line,nowLine });
+						else if (nowProgram == EVENT) nowUnit->eventProgram.back().second.push_back({ line,nowLine });
+						else if (nowProgram == CANDY_ONCE) candyCode.push_back({ line,nowLine });
 					}
 				}
 				catch (exception& e) {
@@ -142,53 +312,11 @@ namespace Dmsl {
 				}
 
 			}
-			if (layer != 0){log << "编译错误：存在没配对的代码块首尾！" << endl;success = false;}
+			if (layer != 0) { log << "编译错误：存在没配对的代码块首尾！" << endl; success = false; }
+
+			if (nowUnit->initProgram.empty()) nowUnit->initProgram.push_back({ "end",nowLine });
+			if (nowUnit->mainProgram.empty()) nowUnit->mainProgram.push_back({ "end",nowLine });
 			return success;
-		}
-		void DisplayPrecompiled(const Precompiled & comp, std::ostream & out)
-		{
-			out << "--Constants" << endl;
-			for (auto& i : comp.constants) {
-				out << i.first << " = " << i.second << endl;
-			}
-
-			out << "--Uniforms" << endl;
-			for (auto& i : comp.uniformVars) {
-				out << i.first << " address:" << i.second << endl;
-			}
-
-			out << "--Attributes" << endl;
-			for (auto& i : comp.attributeVars) {
-				out << i.first << " address:" << i.second << endl;
-			}
-
-			out << "--CFunctions" << endl;
-			for (auto& i : comp.cFuncs) {
-				out << i.first << " params:" << comp.funcParmNum.at(i.second) << " address:" << i.second << endl;
-			}
-
-			out << "--CMethods" << endl;
-			for (auto& i : comp.cMet) {
-				out << i.first << " params:" << comp.metParamNum.at(i.second) << " address:" << i.second << endl;
-			}
-
-			out << "--Units" << endl;
-			for (auto& unit : comp.units) {
-				out << "Number:" << unit.num << "  Mem Size:" << unit.memSize << endl;
-				out << "  --Vars" << endl;
-				for (auto& v: unit.varTable) {
-					out << "       " << v.first << " address:" << v.second << endl;
-				}
-				out << "--InitProgram" << endl;
-				for (auto& c : unit.initProgram) {
-					out << "            " << c << endl;
-				}
-				out << "--MainProgram" << endl;
-				for (auto& c : unit.mainProgram) {
-					out << "            " << c << endl;
-				}
-			}
-
 		}
 	}
 }

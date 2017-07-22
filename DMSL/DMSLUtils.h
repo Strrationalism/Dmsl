@@ -20,8 +20,8 @@ namespace Dmsl {
 		//去除注释
 		std::string DeleteComments(const std::string&);
 
-		//转换到float
-		float ToFloat(const std::string&);
+		//转换到double
+		double ToDouble(const std::string&);
 
 		//转换到int
 		int ToInt(const std::string&);

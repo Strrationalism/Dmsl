@@ -64,11 +64,11 @@ namespace Dmsl {
 		}
 
 
-		//转换到float
-		float ToFloat(const std::string& f) {
+		//转换到double
+		double ToDouble(const std::string& f) {
 			for (char ch : f)
 				if (!isdigit(ch) && ch != '.') throw std::invalid_argument(string("错误的数值 ") + f);
-			return (float)atof(f.c_str());
+			return (double)atof(f.c_str());
 		}
 		int ToInt(const std::string & i)
 		{
@@ -132,7 +132,7 @@ namespace Dmsl {
 				}
 			}
 			else {
-				while (!isalnum(s[0])) {
+				while (!(isalnum(s[0]) || s[0] == '_')) {
 					r += s[0];
 					s = s.substr(1, s.length() - 1);
 					if(s.empty()) break;
@@ -140,7 +140,9 @@ namespace Dmsl {
                 while(!symbols.count(r)){
                     s = r[r.length()-1] + s;
                     r = r.substr(0,r.length()-1);
-                    if(r.empty()) throw invalid_argument("错误的运算符。");
+					if (r.empty()) {
+						throw invalid_argument("错误的运算符。");
+					}
                 }
 			}
 			return r;

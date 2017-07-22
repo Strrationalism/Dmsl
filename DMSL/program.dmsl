@@ -1,4 +1,4 @@
-uniform dmslVersion	#Dmsl编译器/虚拟机版本
+
 attribute result	#作为输出的值
 
 cfunc sin,1	#数学函数
@@ -22,7 +22,6 @@ unit 0
 		result <- 233:123:456:789
 	end
 	main
-		print dmslVersion
 		endl
 		gensokyo 123456
 		endl

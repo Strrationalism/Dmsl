@@ -24,35 +24,35 @@ namespace Dmsl {
 		bool Compile(const Precompiled& in, Compiled& out,std::ostream& log);
 
 		//编译程序单元
-		void CompileUnit(const Dmsl::Compiler::Precompiled& in,const Precompiled::Unit&,std::vector<uint8_t>& out,const std::vector<std::string>& inProgram);
+		void CompileUnit(const Dmsl::Compiler::Precompiled& in,const Precompiled::Unit&,std::vector<uint8_t>& out,const std::vector<Precompiled::Unit::Code>& inProgram);
 
 		//按行编译
-		void CompileLines(const Dmsl::Compiler::Precompiled& in,const Precompiled::Unit&,std::vector<uint8_t>& out,const std::vector<std::string>& inProgram,uint32_t begin,uint32_t end);
+		void CompileLines(const Dmsl::Compiler::Precompiled& in,const Precompiled::Unit&,std::vector<uint8_t>& out,const std::vector<Precompiled::Unit::Code>& inProgram,uint32_t begin,uint32_t end);
 
 		//从begin开始搜索同一层代码中下个与leftWord相同的左词语句，遇到跳出开始处最低层代码的则直接返回end语句位置
-		uint32_t SearchSameLayerBlockCode(const std::vector<std::string>& code,const std::string& leftWord,uint32_t begin);
+		uint32_t SearchSameLayerBlockCode(const std::vector<Precompiled::Unit::Code>& code,const std::string& leftWord,uint32_t begin);
 
-		//把float压进代码
-		void PushFloat(float, std::vector<uint8_t>& out);
+		//把double压进代码
+		void PushDouble(double, std::vector<uint8_t>& out);
 
 		//把地址压入代码，返回压入的地址的地址
-		uint32_t PushAddress(uint32_t, std::vector<uint8_t>& out);
+		uintptr_t PushAddress(uintptr_t, std::vector<uint8_t>& out);
 
 		//根据二级地址重新设置已经被压入的地址
-		void ResetAddress(uint32_t addressSaddress,uint32_t address, std::vector<uint8_t>& out);
+		void ResetAddress(uintptr_t addressSaddress, uintptr_t address, std::vector<uint8_t>& out);
 
 		//把指令压入代码
 		void PushCmd(Dmsl::VirtualMachine::ElfCode, std::vector<uint8_t>& out);
 
 		//解析出的表达式结构体
-		struct ParsedMathWord {
+		struct ParsedMathWord final{
 			enum {
 				NUMBER, VARNAME, OPR, FUNC_NAME
 			}type;
 			bool nega = false;	//相反数
 			struct Data{
 				std::string varName;
-				float number;
+				double number;
 				struct Opr{
 					int level;	//优先级记录
 					enum {
@@ -83,7 +83,7 @@ namespace Dmsl {
 		//解析表达式到代码
 		//返回值意义：
 		//0 - 表达式返回1个Bool值
-		//n(>=1) - 表达式返回n个float
+		//n(>=1) - 表达式返回n个double
 		int ParseMath(const Precompiled& in,const Precompiled::Unit& unit, std::string, std::vector<uint8_t>& out);
 
 		//解析表达式下层函数 -- 压入扫描到的数据
@@ -104,9 +104,14 @@ namespace Dmsl {
 		//5 - number
 		//6 - cfunc
 		//7 - cmethod
+		//8 - inVarying
+		//9 - outVarying
 		int WhatsTheVar(const Precompiled& in,const Precompiled::Unit& unit, const std::string& name);
 
 		//递归处理if结构
-		void CompileIfLines(const Dmsl::Compiler::Precompiled& in,const Precompiled::Unit&,std::vector<uint8_t>& out,const std::vector<std::string>& inProgram,uint32_t begin,uint32_t end);
+		void CompileIfLines(const Dmsl::Compiler::Precompiled& in,const Precompiled::Unit&,std::vector<uint8_t>& out,const std::vector<Precompiled::Unit::Code>& inProgram,uint32_t begin,uint32_t end);
+
+		//处理Times结构
+		void CompileTimesLines(const Dmsl::Compiler::Precompiled& in, const Precompiled::Unit&, std::vector<uint8_t>& out, const std::vector<Precompiled::Unit::Code>& inProgram, uint32_t begin, uint32_t end,int times);
 	}
 }

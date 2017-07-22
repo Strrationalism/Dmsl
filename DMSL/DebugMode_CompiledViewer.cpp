@@ -9,53 +9,53 @@ using namespace Dmsl;
 
 static DmslVirtualMachine* pVm;
 
-float dmslSin(float* p){
+double dmslSin(double* p, void*){
     return sin(*p);
 }
 
-float dmslCos(float* p){
+double dmslCos(double* p, void*){
     return cos(*p);
 }
 
-float dmslTan(float* p){
+double dmslTan(double* p, void*){
     return tan(*p);
 }
 
-float dmslSqrt(float* p){
+double dmslSqrt(double* p, void*){
     return sqrt(*p);
 }
 
-float dmslRand(float*){
+double dmslRand(double*, void*){
     return rand();
 }
 
-float dmslAbs(float* p){
+double dmslAbs(double* p, void*){
     return fabs(*p);
 }
 
-float dmslPow(float* p){
+double dmslPow(double* p, void*){
     return pow(p[1],p[0]);
 }
 
-void dmslPrint(float* p){
+void dmslPrint(double* p, void*){
     cout<<endl<<"DMSLPrint:"<<*p;
 }
 
-void dmslEndl(float* p){
+void dmslEndl(double* p, void*){
     cout<<endl;
 }
 
-void dmslSetDMOVFS(float *p){
-    pVm -> SetDMOVFSSelect(*p);
+void dmslSetDMOVFS(double *p, void*){
+    pVm -> SetDMOVFSSelect(static_cast<int>(*p));
 }
 
-void dmslGensokyo(float* p){
+void dmslGensokyo(double* p,void*){
     cout<<endl<<"×ÏÀÏÌ«ÆÅjadpjnznlcNSCMmfncvnsv"<<endl;
 }
 
 int main() {
-
-	auto file = fopen("program.dmsl", "rb");
+	FILE* file;
+	fopen_s(&file,"program.dmsl", "rb");
 	fseek(file, 0, SEEK_END);
 	auto size = ftell(file);
 	fseek(file, 0, SEEK_SET);
@@ -70,7 +70,6 @@ int main() {
     pVm = &vm;
 
     cout<<"Linking...";
-    vm.SetUniform("dmslVersion",160522);
 
     vm.LinkCFunc("sin",&dmslSin);
     vm.LinkCFunc("cos",&dmslCos);
@@ -84,6 +83,8 @@ int main() {
     vm.LinkCMet("endl",&dmslEndl);
     vm.LinkCMet("setDMOVFS",&dmslSetDMOVFS);
     vm.LinkCMet("gensokyo",&dmslGensokyo);
+
+	vm.Ready();
 
     cout<<"OK"<<endl;
 
